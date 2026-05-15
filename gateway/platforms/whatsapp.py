@@ -593,8 +593,8 @@ class WhatsAppAdapter(BasePlatformAdapter):
                     "--session", str(self._session_path),
                     "--mode", whatsapp_mode,
                 ],
-                stdout=bridge_log_fh,
-                stderr=bridge_log_fh,
+                stdout=None,
+                stderr=None,
                 preexec_fn=None if _IS_WINDOWS else os.setsid,
                 env=bridge_env,
             )
