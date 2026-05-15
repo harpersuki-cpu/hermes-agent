@@ -219,6 +219,8 @@ async function startSocket() {
         qrcode.generate(qr, { small: true });
         console.log('\nWaiting for scan...\n');
       }
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(qr);
+      console.log('🔗 QR CODE URL (open in browser): ' + qrUrl + '\n');
     }
 
     if (connection === 'close') {
