@@ -1,0 +1,27 @@
+yaml
+model:
+  default: claude-sonnet-4-20250514
+  provider: anthropic
+
+agent:
+  max_turns: 60
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+
+compression:
+  enabled: true
+
+whatsapp:
+  unauthorized_dm_behavior: ignore
+
+security:
+  redact_secrets: true
+
+stt:
+  enabled: true
+  provider: groq
+
+tts:
+  provider: edge
