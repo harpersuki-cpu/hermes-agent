@@ -205,12 +205,15 @@ async function startSocket() {
 
     if (qr) {
       if (process.env.WHATSAPP_PHONE_NUMBER) {
-        sock.requestPairingCode(process.env.WHATSAPP_PHONE_NUMBER).then(code => {
-          console.log('\n📱 PAIRING CODE: ' + code + '\n');
-          console.log('Enter this code in WhatsApp → Linked Devices → Link with phone number\n');
-        }).catch(err => {
-          console.log('Failed to get pairing code: ' + err.message);
-        });
+        if (!sock._pairingRequested) {
+          sock._pairingRequested = true;
+          sock.requestPairingCode(process.env.WHATSAPP_PHONE_NUMBER).then(code => {
+            console.log('\n📱 PAIRING CODE: ' + code + '\n');
+            console.log('Enter this code in WhatsApp → Linked Devices → Link with phone number\n');
+          }).catch(err => {
+            console.log('Failed to get pairing code: ' + err.message);
+          });
+        }
       } else {
         console.log('\n📱 Scan this QR code with WhatsApp on your phone:\n');
         qrcode.generate(qr, { small: true });
