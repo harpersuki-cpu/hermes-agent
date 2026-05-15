@@ -113,5 +113,6 @@ RUN uv pip install --no-cache-dir --no-deps -e "."
 ENV HERMES_WEB_DIST=/opt/hermes/hermes_cli/web_dist
 ENV HERMES_HOME=/opt/data
 ENV PATH="/opt/data/.local/bin:${PATH}"
+RUN cd /opt/hermes/scripts/whatsapp-bridge && npm install --silent && chown -R hermes:hermes /opt/hermes/scripts/whatsapp-bridge/node_modules
 COPY --chown=hermes:hermes docker/casa-phani-config.yaml /opt/hermes/cli-config.yaml.example
 ENTRYPOINT [ "/usr/bin/tini", "-g", "--", "/opt/hermes/docker/entrypoint.sh" ]
