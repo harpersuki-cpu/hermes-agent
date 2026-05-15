@@ -204,9 +204,15 @@ async function startSocket() {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log('\n📱 Scan this QR code with WhatsApp on your phone:\n');
-      qrcode.generate(qr, { small: true });
-      console.log('\nWaiting for scan...\n');
+      if (process.env.WHATSAPP_PHONE_NUMBER) {
+        const code = await sock.requestPairingCode(process.env.WHATSAPP_PHONE_NUMBER);
+        console.log('\n📱 PAIRING CODE: ' + code + '\n');
+        console.log('Enter this code in WhatsApp → Linked Devices → Link with phone number\n');
+      } else {
+        console.log('\n📱 Scan this QR code with WhatsApp on your phone:\n');
+        qrcode.generate(qr, { small: true });
+        console.log('\nWaiting for scan...\n');
+      }
     }
 
     if (connection === 'close') {
