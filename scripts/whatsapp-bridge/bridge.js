@@ -223,8 +223,10 @@ async function startSocket() {
       connectionState = 'disconnected';
 
       if (reason === DisconnectReason.loggedOut) {
-        console.log('❌ Logged out. Delete session and restart to re-authenticate.');
-        process.exit(1);
+        console.log('❌ Logged out. Clearing session and restarting...');
+        import('fs').then(fs => { fs.rmSync(SESSION_DIR, { recursive: true, force: true }); });
+        setTimeout(() => process.exit(1), 1000);
+        return;
       } else {
         // 515 = restart requested (common after pairing). Always reconnect.
         if (reason === 515) {
