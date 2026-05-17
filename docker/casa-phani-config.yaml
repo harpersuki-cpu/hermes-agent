@@ -1,12 +1,12 @@
 model:
-  default: claude-opus-4-20250618
+  default: claude-opus-4-6
   provider: anthropic
 
 agent:
   max_turns: 60
 
 delegation:
-  model: claude-opus-4-20250618
+  model: claude-opus-4-6
   provider: anthropic
 
 memory:
