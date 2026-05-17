@@ -1,6 +1,5 @@
 #!/bin/bash
 # Casa Phani — first-boot brain setup
-# Runs automatically on every boot via casa-phani-entrypoint.sh
 # Idempotent — flag file prevents re-running expensive steps.
 
 set -e
@@ -9,7 +8,7 @@ FLAG="/opt/data/.brain-initialized"
 BRAIN_DIR="/opt/data/brain"
 GBRAIN_DIR="/opt/data/gbrain"
 export HOME="/opt/data/home"
-mkdir -p "$HOME"
+mkdir -p "$HOME" "$HOME/.npm-global"
 
 # Skip if already done
 if [ -f "$FLAG" ]; then
@@ -19,14 +18,9 @@ fi
 
 echo "[casa-phani] First boot — setting up brain..."
 
-# ── Install bun ──
-if [ ! -f "$HOME/.bun/bin/bun" ]; then
-    echo "[casa-phani] Installing bun..."
-    curl -fsSL https://bun.sh/install | bash 2>&1 || {
-        echo "[casa-phani] Bun install failed, trying npm fallback..."
-    }
-fi
-export PATH="$HOME/.bun/bin:$HOME/.npm-global/bin:/usr/local/bin:$PATH"
+# ── npm prefix (avoid /usr/local permission issues) ──
+npm config set prefix "$HOME/.npm-global"
+export PATH="$HOME/.npm-global/bin:$PATH"
 
 # ── Clone & install gbrain ──
 if [ ! -d "$GBRAIN_DIR" ]; then
@@ -35,20 +29,18 @@ if [ ! -d "$GBRAIN_DIR" ]; then
 fi
 
 cd "$GBRAIN_DIR"
-mkdir -p "$HOME/.npm-global"
-npm config set prefix "$HOME/.npm-global"
-
 if ! command -v gbrain &>/dev/null; then
-    echo "[casa-phani] Installing gbrain..."
-    npm install --silent 2>&1
-    npm link 2>&1
+    echo "[casa-phani] Installing gbrain via npm..."
+    npm install --silent 2>&1 || echo "[casa-phani] npm install had warnings"
+    npm link 2>&1 || echo "[casa-phani] npm link had warnings"
 fi
 export PATH="$HOME/.npm-global/bin:$PATH"
 
 # ── Initialize gbrain database ──
 if command -v gbrain &>/dev/null; then
     echo "[casa-phani] Initializing gbrain database..."
-    gbrain init 2>&1 || true
+    gbrain init 2>&1 || echo "[casa-phani] gbrain init had issues"
+    gbrain doctor --json 2>&1 || true
 fi
 
 # ── Clone brain repo ──
@@ -71,7 +63,8 @@ if command -v gbrain &>/dev/null && [ -d "$BRAIN_DIR" ]; then
 fi
 
 # ── Make everything owned by hermes user ──
-chown -R 10000:10000 "$HOME" "$BRAIN_DIR" "$GBRAIN_DIR" /opt/data/.gbrain 2>/dev/null || true
+chown -R 10000:10000 "$HOME" "$BRAIN_DIR" "$GBRAIN_DIR" 2>/dev/null || true
+chown -R 10000:10000 /opt/data/.gbrain 2>/dev/null || true
 
 touch "$FLAG"
 echo "[casa-phani] ✅ Brain setup complete!"
