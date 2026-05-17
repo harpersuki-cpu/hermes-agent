@@ -1,9 +1,13 @@
 model:
-  default: claude-sonnet-4-20250514
+  default: claude-opus-4-20250618
   provider: anthropic
 
 agent:
   max_turns: 60
+
+delegation:
+  model: claude-opus-4-20250618
+  provider: anthropic
 
 memory:
   memory_enabled: true
