@@ -1,13 +1,15 @@
 #!/bin/bash
 # Casa Phani — first-boot brain setup
-# Runs once, creates a flag file to skip on subsequent boots.
-# Called from entrypoint or manually.
+# Runs automatically on every boot via casa-phani-entrypoint.sh
+# Idempotent — flag file prevents re-running expensive steps.
 
 set -e
 
 FLAG="/opt/data/.brain-initialized"
 BRAIN_DIR="/opt/data/brain"
 GBRAIN_DIR="/opt/data/gbrain"
+export HOME="/opt/data/home"
+mkdir -p "$HOME"
 
 # Skip if already done
 if [ -f "$FLAG" ]; then
@@ -17,64 +19,59 @@ fi
 
 echo "[casa-phani] First boot — setting up brain..."
 
-# Install bun if not present
-if ! command -v bun &>/dev/null && [ ! -f "$HOME/.bun/bin/bun" ]; then
+# ── Install bun ──
+if [ ! -f "$HOME/.bun/bin/bun" ]; then
     echo "[casa-phani] Installing bun..."
-    curl -fsSL https://bun.sh/install | bash
+    curl -fsSL https://bun.sh/install | bash 2>&1 || {
+        echo "[casa-phani] Bun install failed, trying npm fallback..."
+    }
 fi
-export PATH="$HOME/.bun/bin:$HOME/.npm-global/bin:$PATH"
+export PATH="$HOME/.bun/bin:$HOME/.npm-global/bin:/usr/local/bin:$PATH"
 
-# Clone gbrain if not present
+# ── Clone & install gbrain ──
 if [ ! -d "$GBRAIN_DIR" ]; then
     echo "[casa-phani] Cloning gbrain..."
-    git clone https://github.com/garrytan/gbrain.git "$GBRAIN_DIR"
-    cd "$GBRAIN_DIR"
-    npm config set prefix "$HOME/.npm-global"
-    npm install && npm link
-else
-    echo "[casa-phani] gbrain already cloned."
+    git clone --depth 1 https://github.com/garrytan/gbrain.git "$GBRAIN_DIR"
 fi
 
-export PATH="$HOME/.npm-global/bin:$HOME/.bun/bin:$PATH"
+cd "$GBRAIN_DIR"
+mkdir -p "$HOME/.npm-global"
+npm config set prefix "$HOME/.npm-global"
 
-# Initialize gbrain database
+if ! command -v gbrain &>/dev/null; then
+    echo "[casa-phani] Installing gbrain..."
+    npm install --silent 2>&1
+    npm link 2>&1
+fi
+export PATH="$HOME/.npm-global/bin:$PATH"
+
+# ── Initialize gbrain database ──
 if command -v gbrain &>/dev/null; then
-    echo "[casa-phani] Initializing gbrain..."
-    gbrain init || true
-    gbrain doctor --json || true
-else
-    echo "[casa-phani] WARNING: gbrain not on PATH after install"
+    echo "[casa-phani] Initializing gbrain database..."
+    gbrain init 2>&1 || true
 fi
 
-# Clone brain repo if not present
+# ── Clone brain repo ──
 if [ ! -d "$BRAIN_DIR" ]; then
     echo "[casa-phani] Cloning brain repo..."
-    git clone https://github.com/harpersuki-cpu/casa-phani-brain.git "$BRAIN_DIR"
-else
-    echo "[casa-phani] Brain repo already present."
+    git clone --depth 1 https://github.com/harpersuki-cpu/casa-phani-brain.git "$BRAIN_DIR"
 fi
 
-# Import brain into gbrain
+# ── Import + embed ──
 if command -v gbrain &>/dev/null && [ -d "$BRAIN_DIR" ]; then
     echo "[casa-phani] Importing brain pages..."
-    gbrain import "$BRAIN_DIR" --no-embed || true
-    
-    # Embed if OpenAI key is available
+    gbrain import "$BRAIN_DIR" --no-embed 2>&1 || true
+
     if [ -n "$OPENAI_API_KEY" ]; then
         echo "[casa-phani] Generating embeddings..."
-        gbrain embed --stale || true
+        gbrain embed --stale 2>&1 || true
     else
-        echo "[casa-phani] OPENAI_API_KEY not set, skipping embeddings."
+        echo "[casa-phani] Skipping embeddings (no OPENAI_API_KEY)."
     fi
 fi
 
-# Copy personality file if present
-SOUL_SRC="/opt/hermes/docker/SOUL.md"
-SOUL_DST="/opt/data/personality.md"
-if [ -f "$SOUL_SRC" ] && [ ! -f "$SOUL_DST" ]; then
-    cp "$SOUL_SRC" "$SOUL_DST"
-    echo "[casa-phani] Personality deployed."
-fi
+# ── Make everything owned by hermes user ──
+chown -R 10000:10000 "$HOME" "$BRAIN_DIR" "$GBRAIN_DIR" /opt/data/.gbrain 2>/dev/null || true
 
 touch "$FLAG"
 echo "[casa-phani] ✅ Brain setup complete!"
