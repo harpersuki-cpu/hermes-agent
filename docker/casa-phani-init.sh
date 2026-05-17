@@ -1,7 +1,6 @@
 #!/bin/bash
 # Casa Phani — first-boot brain setup
-# Idempotent — flag file prevents re-running expensive steps.
-# Flag is ONLY set when gbrain is fully working.
+# Requires GITHUB_PAT env var for private brain repo access.
 
 set -e
 
@@ -11,7 +10,6 @@ GBRAIN_DIR="/opt/data/gbrain"
 export HOME="/opt/data/home"
 mkdir -p "$HOME" "$HOME/.npm-global"
 
-# Skip if fully done
 if [ -f "$FLAG" ]; then
     echo "[casa-phani] Brain already initialized, skipping."
     exit 0
@@ -19,7 +17,7 @@ fi
 
 echo "[casa-phani] First boot — setting up brain..."
 
-# ── npm prefix (avoid /usr/local permission issues) ──
+# ── npm prefix ──
 npm config set prefix "$HOME/.npm-global"
 export PATH="$HOME/.npm-global/bin:$PATH"
 
@@ -37,20 +35,23 @@ if ! command -v gbrain &>/dev/null; then
 fi
 export PATH="$HOME/.npm-global/bin:$PATH"
 
-# ── Verify gbrain is available ──
 if ! command -v gbrain &>/dev/null; then
     echo "[casa-phani] ❌ gbrain not found after install. Will retry next boot."
     exit 1
 fi
 
-# ── Initialize gbrain database ──
 echo "[casa-phani] Initializing gbrain database..."
 gbrain init 2>&1 || echo "[casa-phani] gbrain init had issues"
 
-# ── Clone brain repo ──
+# ── Clone brain repo (private — needs GITHUB_PAT) ──
 if [ ! -d "$BRAIN_DIR" ]; then
-    echo "[casa-phani] Cloning brain repo..."
-    git clone --depth 1 https://github.com/harpersuki-cpu/casa-phani-brain.git "$BRAIN_DIR"
+    if [ -n "$GITHUB_PAT" ]; then
+        echo "[casa-phani] Cloning brain repo (authenticated)..."
+        git clone --depth 1 "https://${GITHUB_PAT}@github.com/harpersuki-cpu/casa-phani-brain.git" "$BRAIN_DIR"
+    else
+        echo "[casa-phani] ⚠️ GITHUB_PAT not set — cannot clone private brain repo."
+        echo "[casa-phani] Add GITHUB_PAT env var in Railway and redeploy."
+    fi
 fi
 
 # ── Import + embed ──
@@ -66,12 +67,11 @@ if [ -d "$BRAIN_DIR" ]; then
     fi
 fi
 
-# ── Make everything owned by hermes user ──
+# ── Ownership ──
 chown -R 10000:10000 "$HOME" 2>/dev/null || true
 chown -R 10000:10000 "$BRAIN_DIR" 2>/dev/null || true
 chown -R 10000:10000 "$GBRAIN_DIR" 2>/dev/null || true
 chown -R 10000:10000 /opt/data/.gbrain 2>/dev/null || true
 
-# Only set flag if we got this far
 touch "$FLAG"
 echo "[casa-phani] ✅ Brain setup complete!"
