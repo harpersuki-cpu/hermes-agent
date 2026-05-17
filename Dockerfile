@@ -120,3 +120,4 @@ COPY --chown=hermes:hermes docker/casa-phani-init.sh /opt/hermes/docker/casa-pha
 COPY --chown=hermes:hermes docker/casa-phani-entrypoint.sh /opt/hermes/docker/casa-phani-entrypoint.sh
 RUN chmod +x /opt/hermes/docker/casa-phani-init.sh /opt/hermes/docker/casa-phani-entrypoint.sh
 ENTRYPOINT [ "/usr/bin/tini", "-g", "--", "/opt/hermes/docker/casa-phani-entrypoint.sh" ]
+CMD [ "gateway", "run" ]
