@@ -115,4 +115,7 @@ ENV HERMES_HOME=/opt/data
 ENV PATH="/opt/data/.local/bin:${PATH}"
 RUN cd /opt/hermes/scripts/whatsapp-bridge && npm install --silent && chown -R hermes:hermes /opt/hermes/scripts/whatsapp-bridge/node_modules
 COPY --chown=hermes:hermes docker/casa-phani-config.yaml /opt/hermes/cli-config.yaml.example
+COPY --chown=hermes:hermes docker/SOUL.md /opt/hermes/docker/SOUL.md
+COPY --chown=hermes:hermes docker/casa-phani-init.sh /opt/hermes/docker/casa-phani-init.sh
+RUN chmod +x /opt/hermes/docker/casa-phani-init.sh
 ENTRYPOINT [ "/usr/bin/tini", "-g", "--", "/opt/hermes/docker/entrypoint.sh" ]
