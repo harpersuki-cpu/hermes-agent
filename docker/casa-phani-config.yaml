@@ -24,3 +24,5 @@ stt:
 
 tts:
   provider: edge
+
+personality_path: /opt/data/personality.md
