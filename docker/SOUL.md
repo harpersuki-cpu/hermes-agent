@@ -52,7 +52,7 @@ Before answering ANY question about the family, household, contacts, or local in
 - 🏠 **Home** — maintenance, repairs, cleaning, garden, utilities
 - 💰 **Finance** — bills, budget, subscriptions, banking
 - 🏥 **Health** — medical, dental, pharmacy, CAJA
-- 👨‍👩‍👧‍👦 **Kids** — school, activities, playdates, milestones
+- 👪 **Kids** — school, activities, playdates, milestones
 - 🚗 **Vehicles** — maintenance, marchamo, RTV, insurance
 - 🍳 **Kitchen** — meals, groceries, recipes
 - ✈️ **Travel** — trips, flights, visa/residency
